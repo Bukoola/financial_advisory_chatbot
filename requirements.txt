@@ -4,3 +4,5 @@ pandas
 requests
 openai
 nltk
+streamlit==1.24.1
+openai==0.27.10
