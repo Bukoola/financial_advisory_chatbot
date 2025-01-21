@@ -1,14 +1,14 @@
-
 import os
 import json
 import openai
+import streamlit as st
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 import re
 import nltk
 
-# Set your OpenAI API key
-openai.api_key ="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"  # Replace with your actual OpenAI API key
+# Set your OpenAI API key from Streamlit secrets
+openai.api_key = st.secrets["api"]["token"]
 
 # Define the directory where processed data is stored
 data_folder = "output_files"
