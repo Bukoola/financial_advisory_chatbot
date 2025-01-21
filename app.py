@@ -31,25 +31,19 @@ def query_gpt4(data, question, document_name=None):
     else:
         context = "\n\n".join(data.values())  # Use all documents if none specified
 
-    # GPT-4 prompt
-    prompt = (
-        "You are an AI assistant trained on financial and legal topics.\n"
-        "Use the following context to answer the question:\n\n"
-        f"Context:\n{context}\n\n"
-        f"Question: {question}\n"
-        "Answer:"
-    )
+    # GPT-4 messages array
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant trained on financial and legal topics."},
+        {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {question}"}
+    ]
 
     try:
         response = openai.ChatCompletion.create(
             model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt},
-            ],
+            messages=messages,
             temperature=0.2,  # Lower temperature for factual accuracy
         )
-        return response['choices'][0]['message']['content']
+        return response.choices[0].message.content
     except Exception as e:
         st.error(f"Error calling GPT-4 API: {e}")
         return None
