@@ -7,6 +7,10 @@ from nltk.stem import WordNetLemmatizer
 import re
 import nltk
 
+# Ensure NLTK resources are downloaded
+nltk.download('stopwords')
+nltk.download('wordnet')
+
 # Set your OpenAI API key from Streamlit secrets
 openai.api_key = st.secrets["api"]["token"]
 
@@ -16,11 +20,18 @@ data_folder = "output_files"
 # Function to load processed data
 def load_data(data_folder):
     data = {}
+    if not os.path.exists(data_folder):
+        st.error(f"The folder '{data_folder}' does not exist.")
+        return data
+
     for file_name in os.listdir(data_folder):
         if file_name.endswith('_normalized.txt'):  # Use normalized text
             file_path = os.path.join(data_folder, file_name)
-            with open(file_path, 'r', encoding='utf-8') as file:
-                data[file_name.replace('_normalized.txt', '')] = file.read()
+            try:
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    data[file_name.replace('_normalized.txt', '')] = file.read()
+            except Exception as e:
+                st.error(f"Error reading file {file_name}: {e}")
     return data
 
 # Function to create a GPT-4 query
@@ -51,35 +62,34 @@ def query_gpt4(data, question, document_name=None):
         )
         return response['choices'][0]['message']['content']
     except Exception as e:
-        print(f"Error calling GPT-4 API: {e}")
+        st.error(f"Error calling GPT-4 API: {e}")
         return None
 
-# Main function to interact with the system
+# Main Streamlit app
 def main():
+    st.title("AI Assistant for Financial and Legal Topics")
+
     # Load the processed data
-    print("Loading data...")
+    st.write("Loading data...")
     data = load_data(data_folder)
-    print(f"Loaded {len(data)} documents.")
+    st.write(f"Loaded {len(data)} documents.")
 
-    while True:
-        # Get user input
-        print("\nAsk a question or type 'exit' to quit.")
-        question = input("Question: ").strip()
-        if question.lower() == 'exit':
-            break
+    # User input for question
+    question = st.text_input("Ask a question:", placeholder="Type your question here...")
 
-        # Optional: Specify a document
-        print("Enter the document name (or press Enter to search all):")
-        document_name = input("Document Name: ").strip()
-        if not document_name:
-            document_name = None
+    # User input for optional document name
+    document_name = st.text_input("Specify a document (optional):", placeholder="Leave blank to use all documents")
+    
+    if st.button("Submit"):
+        if not question:
+            st.error("Please enter a question.")
+        else:
+            st.write("Querying GPT-4...")
+            answer = query_gpt4(data, question, document_name if document_name else None)
+            if answer:
+                st.subheader("Answer:")
+                st.write(answer)
 
-        # Query GPT-4
-        print("Querying GPT-4...")
-        answer = query_gpt4(data, question, document_name)
-        print("\nAnswer:")
-        print(answer)
-
-# Run the program
+# Run the Streamlit app
 if __name__ == "__main__":
     main()
